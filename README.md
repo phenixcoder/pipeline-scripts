@@ -1,4 +1,4 @@
-# NumeorPay / Pipeline Helpers
+# Pipeline Helpers
 
 > CLI toolkit with standard pipeline scripts and helpers
 
