@@ -1,13 +1,16 @@
 {
   "name": "pipeline-helpers",
-  "version": "1.0.0",
+  "version": "0.0.0-development",
   "description": "CI/CD Pipeline helpers scripts",
   "main": "index.js",
   "bin": "./scripts/cli",
   "scripts": {
-    "test": "eslint",
+    "test": "echo \"Nothing to test\"",
     "lint": "eslint",
-    "prettier": "prettier --write ."
+    "prettier": "prettier --write .",
+    "build": "echo \"Nothing to build\"",
+    "release": "semantic-release",
+    "prepare": "husky install"
   },
   "author": "Balwant",
   "license": "ISC",
@@ -17,8 +20,20 @@
     "yargs": "^17.1.1"
   },
   "devDependencies": {
+    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^7.32.0",
     "prettier": "2.3.2",
-    "prettier-eslint": "^13.0.0"
+    "prettier-eslint": "^13.0.0",
+    "semantic-release": "^17.4.7",
+    "husky": "^7.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/phenixcoder/pipeline-helpers.git"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
