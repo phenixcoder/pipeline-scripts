@@ -1,0 +1,52 @@
+#!/usr/bin/env node
+const path = require('path')
+const yargs = require('yargs/yargs')
+const { hideBin } = require('yargs/helpers');
+var shell = require('shelljs');
+var chalk = require('chalk');
+const WEB = require('./package/web');
+const LIB = require('./package/lib');
+const SERVICE = require('./package/service');
+
+const args = yargs(hideBin(process.argv))
+  .command(['package <type>'], 'Package commannd to test, build and package an artifact.', yargs => {
+    return yargs
+    .option('h', {
+      alias: 'host',
+      describe: 'Base domain for this build. Defaults to numeropay.com'
+    })
+    .option('p', {
+      alias: 'package-path',
+      describe: 'Build directory relative to current directory.'
+    })
+  }, (argv) => {
+    switch (argv.type) {
+      case 'lib':
+        LIB(argv);
+        break;
+      case 'web':
+        WEB(argv);
+        break;
+      case 'service':
+        SERVICE(argv);
+        break;
+    
+      default:
+        console.log(chalk.red(`Invalid package type "${argv.type}"`));
+        break;
+    }
+  })
+  .command(['deploy <type>'], 'Deploy app', {}, (argv) => {
+    console.log('Deploy', argv.type, 'type')
+  })
+  .command(['generate-config <env>'], 'Generates version.json for passed environment', {}, (argv) => {
+    console.log('generate config for', argv.env, 'environment')
+  })
+  .command(['init-repo <type>'], 'Intialise pipeline of app type', {}, (argv) => {
+    console.log('init-repo', argv.type, 'type')
+  })
+  .demandCommand()
+  .argv;
+// console.log(process.cwd());
+
+// args.help();
