@@ -3,6 +3,7 @@
 > CLI toolkit with standard pipeline scripts and helpers
 
 ## Usage
+
 ```shell
 pipeline-helpers <command>
 
@@ -19,7 +20,6 @@ Options:
 
 ## Project Types
 
-
 | Type      | Description                       | Artifactory     | Deployment                   |
 | --------- | --------------------------------- | --------------- | ---------------------------- |
 | `lib`     | Shared Library                    | NPM             | N/A                          |
@@ -29,6 +29,7 @@ Options:
 ## Commands
 
 ### `package`
+
 Tests, builds and if needed, packages and releases a new version the artifacet to artifactory. semantic-releases decides if a release needs to be published or not.
 
 ```shell
@@ -44,20 +45,26 @@ Options:
 ```
 
 ### `deploy`
+
 Deploys the provided release version to provided environment. Only aplicable to `web` and `service` types.
 
 ```shell
 WIP
 ```
+
 ### `generate-config`
+
 Generates `version.json` for provided `environment` and `hostname`.
 
 ```shell
 WIP
 ```
+
 ### `init-repo`
-Sets up and verifies the CI/CD pipelines in the specified project repo. 
+
+Sets up and verifies the CI/CD pipelines in the specified project repo.
 It checks for and setup if needed:
+
 1. Semantic versiononing
 2. Commitizen
 3. Release Workflow
@@ -68,4 +75,3 @@ It checks for and setup if needed:
 ```shell
 WIP
 ```
-
