@@ -1,0 +1,9 @@
+.github
+.husky
+node_modules
+.eslintrc.js
+.gitignore
+.npmignore
+.prettierrc.json
+.releaserc
+package-lock.json
