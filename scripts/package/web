@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-const chalk = require("chalk");
-const fs = require("fs");
-const shell = require("shelljs");
+const chalk = require('chalk');
+const fs = require('fs');
+const shell = require('shelljs');
 const PackageJSON = require('../../lib/package-json');
 const GenerateVersion = require('../../lib/generate-version');
-const path = require("path");
+const path = require('path');
 
 function WEB(args) {
   // PACKAGE_PATH="build"
@@ -16,14 +16,14 @@ function WEB(args) {
     gatsby: 'Gatsby Js',
     cra: 'Create React App',
     unknown: 'Unknown'
-  }
+  };
   console.log(chalk.white(`📦 Packaging WebApp ${currentProject.name} into`), `./${PACKAGE_PATH}`);
   console.log(chalk.yellow('Environment: '), BUILD_ENV);
   const PROJECT_STYLE=currentProject.dependencies.gatsby ? 'gatsby' : currentProject.dependencies['react-scripts'] ? 'cra' : 'unknown';
-  console.log(`Current Project Style: ${chalk.greenBright(WEB_PROJECT_STYLES[PROJECT_STYLE])}`)
+  console.log(`Current Project Style: ${chalk.greenBright(WEB_PROJECT_STYLES[PROJECT_STYLE])}`);
 
   if (PROJECT_STYLE !== 'gatsby' || PROJECT_STYLE === 'unknown') {
-    console.log(chalk.redBright('🚫 Cannot continue. Only Gatsby Projects are supported.'))
+    console.log(chalk.redBright('🚫 Cannot continue. Only Gatsby Projects are supported.'));
     return;
   }
 
@@ -39,12 +39,12 @@ function WEB(args) {
       console.log(chalk.gray(`Removing ${dir}`));
       shell.rm('-rf', dir);
     }
-  })
+  });
 
   console.log(chalk.green('⚙️  Genenrating'), chalk.greenBright('version.json'));
   shell.mkdir('public');
   GenerateVersion('public/version.json', BUILD_ENV, 'numeropay.com');
-  console.log(chalk.gray(`version.json created at`), chalk.whiteBright(path.resolve('public/version.json')));
+  console.log(chalk.gray('version.json created at'), chalk.whiteBright(path.resolve('public/version.json')));
   
   console.log(chalk.green('🏗  Genenrating Build'));
   shell.exec('npm run build');
@@ -53,9 +53,9 @@ function WEB(args) {
   shell.mv('public', PACKAGE_PATH);
   
   // zip -r build.zip ./build/*
-  shell.exec(`zip -r build.zip ${PACKAGE_PATH}`)
+  shell.exec(`zip -r build.zip ${PACKAGE_PATH}`);
   const ArtifactPath = path.resolve('./build.zip');
-  console.log(chalk.gray(`Artifact created at`), chalk.whiteBright(ArtifactPath));
+  console.log(chalk.gray('Artifact created at'), chalk.whiteBright(ArtifactPath));
 
   // Releaseing a version and publishing artifact to Github releases (Artifactory)
   console.log(chalk.green('\n📢 Publishing a release artifact'));

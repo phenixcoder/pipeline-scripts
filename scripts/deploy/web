@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+
+// const chalk = require('chalk');
+// const fs = require('fs');
+// const shell = require('shelljs');
+// const PackageJSON = require('../../lib/package-json');
+// const GenerateVersion = require('../../lib/generate-version');
+// const path = require('path');
+
+function WEB() {
+
+  // check if release is passed
+  // check if release is git hash or a version
+  // check if release exist on current repo
+  // download release archive
+  // extract to build
+  // fetch site info from terraform cloud
+  // upload build/* to website S3 bucket
+  // invalidate cdn
+  // test version.json on website via CDN matches build/version.json
+
+  return ;
+}
+
+module.exports = WEB;
