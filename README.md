@@ -1,17 +1,32 @@
-# Pipeline Helpers
+# Pipeline Scripts
 
 > CLI toolkit with standard pipeline scripts and helpers
+
+CI / CD Ingredients:
+
+CI
+
+1. Github Actions
+2. eslint
+3. prettier
+4. husky
+5. commitizen
+6. docker
+7. semantic-release
+8. NPM
+
+CD 2. terraform (terraform cloud) 3. AWS
 
 ## Usage
 
 ```shell
-pipeline-helpers <command>
+pipeline <command>
 
 Commands:
-  pipeline-helpers package <type>         Package commannd to test, build and package an artifact.
-  pipeline-helpers deploy <type>          Deploy app
-  pipeline-helpers generate-config <env>   Generates version.json for passed environment
-  pipeline-helpers init-repo <type>       Intialise pipeline of app type
+  pipeline package <type>         Package commannd to test, build and package an artifact.
+  pipeline deploy <type>          Deploy app
+  pipeline generate-config <env>   Generates version.json for passed environment
+  pipeline init-repo <type>       Intialise pipeline of app type
 
 Options:
   --help     Show help             [boolean]
@@ -33,7 +48,7 @@ Options:
 Tests, builds and if needed, packages and releases a new version the artifacet to artifactory. semantic-releases decides if a release needs to be published or not.
 
 ```shell
-pipeline-helpers package <type>
+pipeline package <type>
 
 Package commannd to test, build and package an artifact.
 

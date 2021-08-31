@@ -1,9 +1,11 @@
 {
-  "name": "pipeline-helpers",
+  "name": "pipeline-scripts",
   "version": "0.0.0-development",
   "description": "CI/CD Pipeline helpers scripts",
   "main": "index.js",
-  "bin": "./scripts/cli",
+  "bin": {
+    "pipeline": "./scripts/cli"
+  },
   "scripts": {
     "test": "echo \"Nothing to test\"",
     "lint": "eslint",
@@ -29,7 +31,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/phenixcoder/pipeline-helpers.git"
+    "url": "https://github.com/phenixcoder/pipeline-scripts.git"
   },
   "config": {
     "commitizen": {
