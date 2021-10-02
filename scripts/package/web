@@ -53,7 +53,10 @@ function WEB(args) {
   shell.mv('public', PACKAGE_PATH);
   
   // zip -r build.zip ./build/*
-  shell.exec(`zip -r build.zip ${PACKAGE_PATH}`);
+  const PWD = shell.pwd();
+  shell.cd(PACKAGE_PATH);
+  shell.exec(`zip -r ${path.join(PWD, 'build.zip')} ./*`);
+  shell.cd(PWD);
   const ArtifactPath = path.resolve('./build.zip');
   console.log(chalk.gray('Artifact created at'), chalk.whiteBright(ArtifactPath));
 

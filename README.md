@@ -64,7 +64,19 @@ Options:
 Deploys the provided release version to provided environment. Only aplicable to `web` and `service` types.
 
 ```shell
-WIP
+pipeline deploy <type>
+
+Deploy a relese to an environment
+
+Options:
+      --help         Show help                                   [boolean]
+      --version      Show version number                         [boolean]
+  -e, --environment  Deployment environment        [default: "production"]
+  -r, --release      Release version.
+                     E.g.: 1.1.0                                [required]
+      --debug        Enable debugging
+      --dry-run      Dry run deploy script. No write actions are
+                     performed.
 ```
 
 ### `generate-config`
