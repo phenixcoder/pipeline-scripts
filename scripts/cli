@@ -37,11 +37,20 @@ yargs(hideBin(process.argv))
       break;
     }
   })
-  .command(['deploy <type>'], 'Deploy app', (yargs) => {
+  .command(['deploy <type>'], 'Deploy a relese to an environment', (yargs) => {
     return yargs
-      .option('r', {
+      .option('e', {
+        alias: 'environment',
+        default: 'production',
+        describe: 'Deployment environment'
+      }).option('r', {
         alias: 'release',
-        demandOption: true
+        demandOption: true,
+        describe: 'Release version. \nE.g.: 1.1.0'
+      }).option('debug', {
+        describe: 'Enable debugging'
+      }).option('dry-run', {
+        describe: 'Dry run deploy script. No write actions are performed.'
       });
   }, (argv) => {
     switch (argv.type) {
@@ -59,7 +68,7 @@ yargs(hideBin(process.argv))
       console.log(chalk.red(`Invalid package type "${argv.type}"`));
       break;
     }
-    console.log('Deploy', argv.type, 'type');
+    // console.log('Deploy', argv.type, 'type');
   })
   .command(['generate-config <env>'], 'Generates version.json for passed environment', {}, (argv) => {
     console.log('generate config for', argv.env, 'environment');

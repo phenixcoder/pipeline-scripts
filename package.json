@@ -17,7 +17,13 @@
   "author": "Balwant",
   "license": "ISC",
   "dependencies": {
+    "@octokit/core": "^3.5.1",
+    "aws-sdk": "^2.999.0",
+    "axios": "^0.22.0",
     "chalk": "^4.1.2",
+    "mime-types": "^2.1.33",
+    "request": "^2.88.2",
+    "request-promise-native": "^1.0.9",
     "shelljs": "^0.8.4",
     "yargs": "^17.1.1"
   },
