@@ -27,6 +27,9 @@
     "shelljs": "^0.8.4",
     "yargs": "^17.1.1"
   },
+  "peerDependencies": {
+    "devops-scripts": "^1.2.1"
+  },
   "devDependencies": {
     "@semantic-release/commit-analyzer": "^8.0.1",
     "@semantic-release/npm": "^7.1.3",
