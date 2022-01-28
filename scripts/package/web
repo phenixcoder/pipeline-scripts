@@ -55,7 +55,7 @@ function WEB(args) {
   // zip -r build.zip ./build/*
   const PWD = shell.pwd();
   shell.cd(PACKAGE_PATH);
-  const ArtifactPath = path.resolve('./build.zip');
+  const ArtifactPath = path.resolve('../build.zip');
   console.log(`zip -r ${ArtifactPath} ./*`);
   shell.exec(`zip -r ${ArtifactPath} ./*`);
   shell.cd(PWD);
