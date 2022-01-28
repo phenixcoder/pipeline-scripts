@@ -55,9 +55,10 @@ function WEB(args) {
   // zip -r build.zip ./build/*
   const PWD = shell.pwd();
   shell.cd(PACKAGE_PATH);
-  shell.exec(`zip -r ${path.join(PWD, 'build.zip')} ./*`);
-  shell.cd(PWD);
   const ArtifactPath = path.resolve('./build.zip');
+  console.log(`zip -r ${ArtifactPath} ./*`);
+  shell.exec(`zip -r ${ArtifactPath} ./*`);
+  shell.cd(PWD);
   console.log(chalk.gray('Artifact created at'), chalk.whiteBright(ArtifactPath));
 
   // Releaseing a version and publishing artifact to Github releases (Artifactory)
