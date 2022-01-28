@@ -15,7 +15,10 @@ CI
 7. semantic-release
 8. NPM
 
-CD 2. terraform (terraform cloud) 3. AWS
+CD 
+
+1. terraform (terraform cloud) 
+2. AWS
 
 ## Usage
 
