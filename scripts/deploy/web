@@ -16,91 +16,95 @@ const sync = require('../../lib/s3-sync');
 
 async function WEB(args) {
 
-  // Usage Example : pipeline deploy web --release 1.1.0
-  args.debug && console.log(args);
-  const { release, environment } = args;
+  try {
+    // Usage Example : pipeline deploy web --release 1.1.0 --environment production
+    args.debug && console.log(args);
+    const { release, environment } = args;
 
-  // check if release is passed
-  if (release && /[0-9]+\.[0-9]+\.[0-9]+/.test(release)) {
-    // check if release is a version
-  } else {
-    console.log(chalk.redBright('🚫 Cannot continue. Invalid release passed.'));
-  }
+    // check if release is passed
+    if (release && /[0-9]+\.[0-9]+\.[0-9]+/.test(release)) {
+      // check if release is a version
+    } else {
+      console.log(chalk.redBright('🚫 Cannot continue. Invalid release passed.'));
+    }
 
-  const package = PackageJSON();
-  const deployrc = DeployRC();
-  if (!deployrc.environments[environment]) {
-    console.log(chalk.redBright('🚫 Cannot continue. Invalid environment passed.'));
-    console.log(`Valid environments:\n${Object.keys(deployrc.environments).map(env => chalk.yellow(' - ') + env).join('\n')}`);
-    return;
-  }
+    const package = PackageJSON();
+    const deployrc = DeployRC();
+    if (!deployrc.environments[environment]) {
+      console.log(chalk.redBright('🚫 Cannot continue. Invalid environment passed.'));
+      console.log(`Valid environments:\n${Object.keys(deployrc.environments).map(env => chalk.yellow(' - ') + env).join('\n')}`);
+      return;
+    }
 
-  const releasePackageUrl = package.repository.url.replace(/\.git$/, '').replace('https://github.com/', '');
-  const [owner, repo] = releasePackageUrl.split('/');
-  const octokit = Github();
+    const releasePackageUrl = package.repository.url.replace(/\.git$/, '').replace('https://github.com/', '');
+    const [owner, repo] = releasePackageUrl.split('/');
+    const octokit = Github();
 
-  console.log(chalk.yellowBright('\nFetch Build Artifact'));
-  console.log(chalk.gray(`
+    console.log(chalk.yellowBright('\nFetch Build Artifact'));
+    console.log(chalk.gray(`
   Owner: ${chalk.white(owner)}
   Repo: ${chalk.white(repo)}
   Release: v${chalk.white(release)}
   `));
-  let response = await octokit.request('GET /repos/{owner}/{repo}/releases/tags/{tag}', {
-    owner,
-    repo,
-    tag: `v${release}`
-  });
+    let response = await octokit.request('GET /repos/{owner}/{repo}/releases/tags/{tag}', {
+      owner,
+      repo,
+      tag: `v${release}`
+    });
 
-  if (response.data.assets[0]) {
-    console.log(`
+    if (response.data.assets[0]) {
+      console.log(`
   ${chalk.green('Release Found.')}
-  ${chalk.gray('Donloading release artifact.')}
+  ${chalk.gray('Downloading release artifact.')}
     `);
-  } else {
-    console.log(chalk.red('Release not found.'));
-    return;
-  }
+    } else {
+      console.log(chalk.red('Release not found.'));
+      return;
+    }
 
-  response = await requestP.get({
-    url: `https://${process.env.GITHUB_TOKEN}:@api.github.com/repos/${owner}/${repo}/releases/assets/${response.data.assets[0].id}`,
-    headers: {
-      'Accept': 'application/octet-stream',
-      'User-Agent': 'pipeline-helpers',
-    },
-    encoding: null // secret scauce :D
-  });
+    response = await requestP.get({
+      url: `https://${process.env.GITHUB_TOKEN}:@api.github.com/repos/${owner}/${repo}/releases/assets/${response.data.assets[0].id}`,
+      headers: {
+        'Accept': 'application/octet-stream',
+        'User-Agent': 'pipeline-helpers',
+      },
+      encoding: null // secret scauce :D
+    });
 
-  if (fs.existsSync(`./build-v${release}.zip`)) {
-    fs.unlinkSync(`./build-v${release}.zip`);
-  }
+    if (fs.existsSync(`./build-v${release}.zip`)) {
+      fs.unlinkSync(`./build-v${release}.zip`);
+    }
 
-  fs.writeFileSync(`./build-v${release}.zip`, response);
+    fs.writeFileSync(`./build-v${release}.zip`, response);
 
-  // extract to build
-  shell.mkdir('build');
-  shell.exec(`unzip build-v${release}.zip -d build`, { silent: true });
+    // extract to build
+    if(fs.existsSync('build')) {
+      shell.rm('-rf', ['build']);
+    }
+    shell.mkdir('build');
+    shell.exec(`unzip build-v${release}.zip -d build`, { silent: true });
 
-  // fetch site info from terraform cloud
-  console.log(chalk.yellowBright('\nFetch site information'));
-  console.log(chalk.gray(`
+    // fetch site info from terraform cloud
+    console.log(chalk.yellowBright('\nFetch site information'));
+    console.log(chalk.gray(`
   Terraform workspace Id: ${deployrc.environments[args.environment]}
   Environment: ${args.environment}
 
   Executing:
     tfc output get --workspace ${deployrc.environments[args.environment]}
   `));
-  let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: true }).stdout;
-  Output = JSON.parse(Output);
+    let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: true }).stdout;
+    Output = JSON.parse(Output);
 
-  const TargetWebsite = Output.websites.find(({ name }) => name === deployrc.name);
-  if (!TargetWebsite) {
-    console.log(chalk.redBright('Error: Website not available in Infrastructure.'));
-    console.log(chalk.green('Expected'), deployrc.name);
-    console.log(chalk.green('Available websites in Infrastructure:\n'), Output.websites.map(({name}) => chalk.yellow(` * ${name}`)).join('\n'));
-    return;
-  }
+    const TargetWebsite = Output.websites.find(({ name }) => name === deployrc.name);
+    if (!TargetWebsite) {
+      console.log(chalk.redBright('Error: Website not available in Infrastructure.'));
+      console.log(chalk.green('Expected'), deployrc.name);
+      console.log(chalk.green('Available websites in Infrastructure:\n'), Output.websites.map(({ name }) => chalk.yellow(` * ${name}`)).join('\n'));
+      return;
+    }
 
-  console.log(chalk.gray(`
+    console.log(chalk.gray(`
   ${chalk.green('Website found.')}
 
     Name: ${chalk.white(TargetWebsite.name)}
@@ -110,57 +114,60 @@ async function WEB(args) {
     S3 Bucket Domain: ${chalk.white(TargetWebsite.s3_bucket_domain)}
   `));
 
-  // console.log(await STS.getCallerIdentity().promise());
+    // console.log(await STS.getCallerIdentity().promise());
 
-  // upload build/* to website S3 bucket
-  console.log(chalk.yellowBright('\nUploading Artifacts'));
-  console.log(chalk.gray('Uploading artifacts to S3 bucket.\n'));
-  console.log(chalk.gray(`
+    // upload build/* to website S3 bucket
+    console.log(chalk.yellowBright('\nUploading Artifacts'));
+    console.log(chalk.gray('Uploading artifacts to S3 bucket.\n'));
+    console.log(chalk.gray(`
   Target S3 bucket: ${TargetWebsite.s3_bucket}
   `));
-  shell.rm('-rf', './build/__MACOSX');
-  if (!args.dryRun) {
-    await sync('./build', TargetWebsite.s3_bucket);
-  }
-
-  // invalidate cdn
-  console.log(chalk.yellowBright('Invalidating CDN'));
-  const invalidationParams = {
-    DistributionId: TargetWebsite.cloudfront_distribution_id,
-    InvalidationBatch: {
-      CallerReference: Date.now().toString(),
-      Paths: { 
-        Quantity: 1,
-        Items: [
-          '/*',
-        ]
-      }
+    shell.rm('-rf', './build/__MACOSX');
+    if (!args.dryRun) {
+      await sync('./build', TargetWebsite.s3_bucket);
     }
-  };
-  console.log(chalk.gray('Distribution Id'), TargetWebsite.cloudfront_distribution_id);
-  if (!args.dryRun) {
-    console.log(chalk.gray('Invalidation link:'), await (await CLOUD_FRONT.createInvalidation(invalidationParams).promise()).Location);
-  }
 
-  // test version.json on website via CDN matches build/version.json
-  console.log(chalk.yellowBright('\nTesting Deployment'));
-  console.log(chalk.gray('Validateing deployed verison.json hash.\n'));
-  var config = {
-    method: 'get',
-    url: `https://${TargetWebsite.domain}/version.json`,
-    headers: { }
-  };
-  
-  const fetchedVersion = (await axios(config)).data;
-  const localVersion = JSON.parse(fs.readFileSync('./build/version.json'));
-  console.log(chalk.gray(`
+    // invalidate cdn
+    console.log(chalk.yellowBright('Invalidating CDN'));
+    const invalidationParams = {
+      DistributionId: TargetWebsite.cloudfront_distribution_id,
+      InvalidationBatch: {
+        CallerReference: Date.now().toString(),
+        Paths: {
+          Quantity: 1,
+          Items: [
+            '/*',
+          ]
+        }
+      }
+    };
+    console.log(chalk.gray('Distribution Id'), TargetWebsite.cloudfront_distribution_id);
+    if (!args.dryRun) {
+      console.log(chalk.gray('Invalidation link:'), await (await CLOUD_FRONT.createInvalidation(invalidationParams).promise()).Location);
+    }
+
+    // test version.json on website via CDN matches build/version.json
+    console.log(chalk.yellowBright('\nTesting Deployment'));
+    console.log(chalk.gray('Validateing deployed verison.json hash.\n'));
+    var config = {
+      method: 'get',
+      url: `https://${TargetWebsite.domain}/version.json`,
+      headers: {}
+    };
+
+    const fetchedVersion = (await axios(config)).data;
+    const localVersion = JSON.parse(fs.readFileSync('./build/version.json'));
+    console.log(chalk.gray(`
   Deployment hashes matched.
   Deployed Hash: ${chalk.white(fetchedVersion.hash)}
   Local Hash:    ${chalk.white(localVersion.hash)}
   `));
-  console.log(chalk.greenBright('Deployment Successfull !!!'));
-  console.log();
-  return;
+    console.log(chalk.greenBright('Deployment Successfull !!!'));
+    console.log();
+    return;
+  } catch (error) {
+    console.log(chalk.redBright(`Error: ${error}`));
+  }
 }
 
 module.exports = WEB;
