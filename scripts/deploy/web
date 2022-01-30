@@ -104,7 +104,15 @@ async function WEB(args) {
     tfc output get --workspace ${deployrc.environments[args.environment]}
   `));
     let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: true }).stdout;
-    Output = JSON.parse(Output);
+    try {
+      Output = JSON.parse(Output);
+    } catch (error) {
+      console.log(chalk.redBright('Error: Could not get Output of Infrastructure.'));
+      console.log(error);
+      console.log(Output);
+      return;
+    }
+
 
     const TargetWebsite = Output.websites.find(({ name }) => name === deployrc.name);
     if (!TargetWebsite) {
