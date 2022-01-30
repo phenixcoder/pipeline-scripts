@@ -58,20 +58,28 @@ async function WEB(args) {
       console.log(`
   ${chalk.green('Release Found.')}
   ${chalk.gray('Downloading release artifact.')}
+  ${chalk.gray(`github.com/repos/${owner}/${repo}/releases/assets/${response.data.assets[0].id}`)}
     `);
     } else {
       console.log(chalk.red('Release not found.'));
       return;
     }
 
-    response = await requestP.get({
-      url: `https://${process.env.GITHUB_TOKEN}:@api.github.com/repos/${owner}/${repo}/releases/assets/${response.data.assets[0].id}`,
-      headers: {
-        'Accept': 'application/octet-stream',
-        'User-Agent': 'pipeline-helpers',
-      },
-      encoding: null // secret scauce :D
-    });
+    try {
+      response = await requestP.get({
+        url: `https://${process.env.GITHUB_TOKEN}:@api.github.com/repos/${owner}/${repo}/releases/assets/${response.data.assets[0].id}`,
+        headers: {
+          'Accept': 'application/octet-stream',
+          'User-Agent': 'pipeline-helpers',
+        },
+        encoding: null // secret scauce :D
+      });
+
+    } catch (reason) {
+      console.log(chalk.red('Error Downloading Artifact'));
+      console.log(reason);
+      return;
+    }
 
     if (fs.existsSync(`./build-v${release}.zip`)) {
       fs.unlinkSync(`./build-v${release}.zip`);
@@ -80,7 +88,7 @@ async function WEB(args) {
     fs.writeFileSync(`./build-v${release}.zip`, response);
 
     // extract to build
-    if(fs.existsSync('build')) {
+    if (fs.existsSync('build')) {
       shell.rm('-rf', ['build']);
     }
     shell.mkdir('build');
