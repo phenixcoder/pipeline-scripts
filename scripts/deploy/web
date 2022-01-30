@@ -19,7 +19,9 @@ async function WEB(args) {
   try {
     // Usage Example : pipeline deploy web --release 1.1.0 --environment production
     args.debug && console.log(args);
-    const { release, environment } = args;
+    const { environment } = args;
+    let { release } = args;
+    release = release.match(/(\d+\.\d+\.\d+)/)[0];
 
     // check if release is passed
     if (release && /[0-9]+\.[0-9]+\.[0-9]+/.test(release)) {
