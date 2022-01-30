@@ -64,7 +64,7 @@ yargs(hideBin(process.argv))
       // LIB(argv);
       break;
     case 'web':
-      console.log(`Deploying ${chalk.yellow('Website')}\n${chalk.whiteBright(`v${argv.release}`)} to ${chalk.whiteBright(argv.environment)}`);
+      console.log(`Deploying ${chalk.yellow('Website')}\n${chalk.whiteBright(argv.release)} to ${chalk.whiteBright(argv.environment)}`);
       DEPLOY_WEB(argv);
       break;
     case 'service':
