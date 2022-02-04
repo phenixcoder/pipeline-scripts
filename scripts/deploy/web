@@ -48,11 +48,17 @@ async function WEB(args) {
   Repo: ${chalk.white(repo)}
   Release: v${chalk.white(release)}
   `));
-    let response = await octokit.request('GET /repos/{owner}/{repo}/releases/tags/{tag}', {
-      owner,
-      repo,
-      tag: `v${release}`
-    });
+  
+    let response;
+    try {
+      response = await octokit.request('GET /repos/{owner}/{repo}/releases/tags/{tag}', {
+        owner,
+        repo,
+        tag: `v${release}`
+      });
+    } catch (reason) {
+      console.log(reason);
+    }
 
     if (response.data.assets[0]) {
       console.log(`
@@ -103,8 +109,9 @@ async function WEB(args) {
   Executing:
     tfc output get --workspace ${deployrc.environments[args.environment]}
   `));
-    let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: true }).stdout;
+    let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: false }).stdout;
     try {
+      console.log(chalk.grey(Output));
       Output = JSON.parse(Output);
     } catch (error) {
       console.log(chalk.redBright('Error: Could not get Output of Infrastructure.'));
