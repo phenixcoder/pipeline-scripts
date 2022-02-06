@@ -6,6 +6,7 @@ const shell = require('shelljs');
 const PackageJSON = require('../../lib/package-json');
 const GenerateVersion = require('../../lib/generate-version');
 const path = require('path');
+const { exit } = process;
 
 function WEB(args) {
   // PACKAGE_PATH="build"
@@ -19,12 +20,12 @@ function WEB(args) {
   };
   console.log(chalk.white(`📦 Packaging WebApp ${currentProject.name} into`), `./${PACKAGE_PATH}`);
   console.log(chalk.yellow('Environment: '), BUILD_ENV);
-  const PROJECT_STYLE=currentProject.dependencies.gatsby ? 'gatsby' : currentProject.dependencies['react-scripts'] ? 'cra' : 'unknown';
+  const PROJECT_STYLE = currentProject.dependencies.gatsby ? 'gatsby' : currentProject.dependencies['react-scripts'] ? 'cra' : 'unknown';
   console.log(`Current Project Style: ${chalk.greenBright(WEB_PROJECT_STYLES[PROJECT_STYLE])}`);
 
   if (PROJECT_STYLE !== 'gatsby' || PROJECT_STYLE === 'unknown') {
     console.log(chalk.redBright('🚫 Cannot continue. Only Gatsby Projects are supported.'));
-    return;
+    exit(1);
   }
 
   // # Cleanup
@@ -45,13 +46,13 @@ function WEB(args) {
   shell.mkdir('public');
   GenerateVersion('public/version.json', BUILD_ENV, 'numeropay.com');
   console.log(chalk.gray('version.json created at'), chalk.whiteBright(path.resolve('public/version.json')));
-  
+
   console.log(chalk.green('🏗  Genenrating Build'));
   shell.exec('npm run build');
-  
+
   console.log(chalk.green('🎁  Packaging artifact'));
   shell.mv('public', PACKAGE_PATH);
-  
+
   // zip -r build.zip ./build/*
   const PWD = shell.pwd();
   shell.cd(PACKAGE_PATH);
@@ -64,7 +65,7 @@ function WEB(args) {
   // Releaseing a version and publishing artifact to Github releases (Artifactory)
   console.log(chalk.green('\n📢 Publishing a release artifact'));
   shell.exec('npm run release');
-  return ;
+  return;
 }
 
 module.exports = WEB;

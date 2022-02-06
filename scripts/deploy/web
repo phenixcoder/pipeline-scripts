@@ -5,6 +5,7 @@ const shell = require('shelljs');
 const fs = require('fs');
 const axios = require('axios');
 const AWS = require('aws-sdk');
+const { exit } = process;
 var CLOUD_FRONT = new AWS.CloudFront();
 
 const requestP = require('request-promise-native');
@@ -28,6 +29,7 @@ async function WEB(args) {
       // check if release is a version
     } else {
       console.log(chalk.redBright('🚫 Cannot continue. Invalid release passed.'));
+      exit(1);
     }
 
     const package = PackageJSON();
@@ -35,7 +37,7 @@ async function WEB(args) {
     if (!deployrc.environments[environment]) {
       console.log(chalk.redBright('🚫 Cannot continue. Invalid environment passed.'));
       console.log(`Valid environments:\n${Object.keys(deployrc.environments).map(env => chalk.yellow(' - ') + env).join('\n')}`);
-      return;
+      exit(1);
     }
 
     const releasePackageUrl = package.repository.url.replace(/\.git$/, '').replace('https://github.com/', '');
@@ -48,7 +50,7 @@ async function WEB(args) {
   Repo: ${chalk.white(repo)}
   Release: v${chalk.white(release)}
   `));
-  
+
     let response;
     try {
       response = await octokit.request('GET /repos/{owner}/{repo}/releases/tags/{tag}', {
@@ -68,7 +70,7 @@ async function WEB(args) {
     `);
     } else {
       console.log(chalk.red('Release not found.'));
-      return;
+      exit(1);
     }
 
     try {
@@ -84,7 +86,7 @@ async function WEB(args) {
     } catch (reason) {
       console.log(chalk.red('Error Downloading Artifact'));
       console.log(reason);
-      return;
+      exit(1);
     }
 
     if (fs.existsSync(`./build-v${release}.zip`)) {
@@ -117,7 +119,7 @@ async function WEB(args) {
       console.log(chalk.redBright('Error: Could not get Output of Infrastructure.'));
       console.log(error);
       console.log(Output);
-      return;
+      exit(1);
     }
 
 
@@ -126,7 +128,7 @@ async function WEB(args) {
       console.log(chalk.redBright('Error: Website not available in Infrastructure.'));
       console.log(chalk.green('Expected'), deployrc.name);
       console.log(chalk.green('Available websites in Infrastructure:\n'), Output.websites.map(({ name }) => chalk.yellow(` * ${name}`)).join('\n'));
-      return;
+      exit(1);
     }
 
     console.log(chalk.gray(`
@@ -188,10 +190,10 @@ async function WEB(args) {
   Local Hash:    ${chalk.white(localVersion.hash)}
   `));
     console.log(chalk.greenBright('Deployment Successfull !!!'));
-    console.log();
-    return;
+    console.log(`::set-output name=ENV_URL::https://${TargetWebsite.domain}`);
   } catch (error) {
     console.log(chalk.redBright(`Error: ${error}`));
+    exit(1);
   }
 }
 
