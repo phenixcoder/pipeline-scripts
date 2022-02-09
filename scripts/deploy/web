@@ -116,7 +116,7 @@ async function WEB(args) {
   Executing:
     tfc output get --workspace ${deployrc.environments[args.environment]}
   `));
-    let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}xx`, { silent: true }).stdout;
+    let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: true }).stdout;
     try {
       Output = JSON.parse(Output);
     } catch (reason) {
