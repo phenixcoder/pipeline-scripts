@@ -193,7 +193,7 @@ async function WEB(args) {
     console.log(chalk.greenBright('Deployment Successfull !!!'));
     console.log(`::set-output name=ENV_URL::https://${TargetWebsite.domain}`);
   } catch (error) {
-    console.log(chalk.redBright(`Error: ${error}`))
+    console.log(chalk.redBright(`Error: ${error}`));
     if (error.stack && args.dryRun) {
       console.log(chalk.gray(error.stack));;
     }
