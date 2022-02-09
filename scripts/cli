@@ -10,8 +10,13 @@ const LIB = require('./package/lib');
 const SERVICE = require('./package/service');
 
 const PackageJSON = require('../package.json');
-console.log(`${chalk.whiteBright(PackageJSON.name.toLocaleUpperCase())} ${chalk.gray(PackageJSON.version)} `);
-console.log(chalk.white(PackageJSON.description));
+const GENERATE_VERSION = require('./generate-version');
+
+function PrintHeader() {
+  console.log(`${chalk.whiteBright(PackageJSON.name.toLocaleUpperCase())} ${chalk.gray(PackageJSON.version)} `);
+  console.log(chalk.white(PackageJSON.description));
+}
+
 yargs(hideBin(process.argv))
   .command(['package <type>'], 'Package commannd to test, build and package an artifact.', yargs => {
     return yargs
@@ -24,6 +29,7 @@ yargs(hideBin(process.argv))
         describe: 'Build directory relative to current directory.'
       });
   }, (argv) => {
+    PrintHeader();
     switch (argv.type) {
     case 'lib':
       console.log(`Packaging ${chalk.yellow('Library')}`);
@@ -59,6 +65,7 @@ yargs(hideBin(process.argv))
         describe: 'Dry run deploy script. No write actions are performed.'
       });
   }, (argv) => {
+    PrintHeader();
     switch (argv.type) {
     case 'lib':
       // LIB(argv);
@@ -77,8 +84,18 @@ yargs(hideBin(process.argv))
     }
     // console.log('Deploy', argv.type, 'type');
   })
-  .command(['generate-config <env>'], 'Generates version.json for passed environment', {}, (argv) => {
-    console.log('generate config for', argv.env, 'environment');
+  .command(['generate-config'], 'Generates version.json for passed environment', (yargs) => {
+    return yargs
+      .option('e', {
+        alias: 'environment',
+        default: 'production',
+        describe: 'Deployment environment'
+      })
+      .option('debug', {
+        describe: 'Enable debugging'
+      });
+  }, (argv) => {
+    GENERATE_VERSION(argv);
   })
   .command(['init-repo <type>'], 'Intialise pipeline of app type', {}, (argv) => {
     console.log('init-repo', argv.type, 'type');

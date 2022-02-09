@@ -81,10 +81,18 @@ Options:
 
 ### `generate-config`
 
-Generates `version.json` for provided `environment` and `hostname`.
+Generates and prints `version.json` for provided `environment`.
 
 ```shell
-WIP
+pipeline generate-config
+
+Generates version.json for passed environment
+
+Options:
+      --help         Show help                                         [boolean]
+      --version      Show version number                               [boolean]
+  -e, --environment  Deployment environment              [default: "production"]
+      --debug        Enable debugging
 ```
 
 ### `init-repo`

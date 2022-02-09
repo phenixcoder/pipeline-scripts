@@ -1,0 +1,61 @@
+#!/usr/bin/env node
+
+const chalk = require('chalk');
+const shell = require('shelljs');
+const { exit } = process;
+const GenerateVersion = require('../lib/generate-version');
+const DeployRC = require('../lib/deployrc');
+const PackageJSON = require('../lib/package-json');
+
+
+async function GENERATE_VERSION(args) {
+  function Log(...logArgs) {
+    if (args.debug) {
+      console.log(...logArgs);
+    }
+  }
+
+  try {
+    // Usage Example : pipeline generate-version --environment production
+    args.debug && Log(args);
+    const { environment } = args;
+    
+    const package = PackageJSON();
+    const deployrc = DeployRC();
+    
+    if (!deployrc.environments[environment]) {
+      Log(chalk.redBright('🚫 Cannot continue. Invalid environment passed.'));
+      Log(`Valid environments:\n${Object.keys(deployrc.environments).map(env => chalk.yellow(' - ') + env).join('\n')}`);
+      exit(1);
+    }
+
+    // fetch site info from terraform cloud
+    Log(chalk.yellowBright('\nFetch site information'));
+    Log(chalk.gray(`
+  Terraform workspace Id: ${deployrc.environments[args.environment]}
+  Environment: ${args.environment}
+
+  Executing:
+    tfc output get --workspace ${deployrc.environments[args.environment]}
+  `));
+    let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: true }).stdout;
+    try {
+      Output = JSON.parse(Output);
+    } catch (error) {
+      console.log(chalk.redBright('Error: Could not get Output of Infrastructure.'));
+      console.log(error);
+      console.log(Output);
+      exit(1);
+    }
+
+    console.log(JSON.stringify(GenerateVersion(Output), null, '  '));
+  } catch (error) {
+    console.log(chalk.redBright(`Error: ${error}`));
+    if (error.stack && args.dryRun) {
+      console.log(chalk.gray(error.stack));;
+    }
+    exit(1);
+  }
+}
+
+module.exports = GENERATE_VERSION;

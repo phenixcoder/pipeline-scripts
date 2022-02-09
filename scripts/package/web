@@ -5,6 +5,7 @@ const fs = require('fs');
 const shell = require('shelljs');
 const PackageJSON = require('../../lib/package-json');
 const GenerateVersion = require('../../lib/generate-version');
+const DeployRC = require('../../lib/deployrc');
 const path = require('path');
 const { exit } = process;
 
@@ -44,7 +45,10 @@ function WEB(args) {
 
   console.log(chalk.green('⚙️  Genenrating'), chalk.greenBright('version.json'));
   shell.mkdir('public');
-  GenerateVersion('public/version.json', BUILD_ENV, 'numeropay.com');
+
+  let Output = shell.exec(`tfc output get --workspace ${DeployRC().environments['production']}`, { silent: false }).stdout;
+  GenerateVersion(Output, 'public/version.json');
+
   console.log(chalk.gray('version.json created at'), chalk.whiteBright(path.resolve('public/version.json')));
 
   console.log(chalk.green('🏗  Genenrating Build'));

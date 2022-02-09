@@ -6,6 +6,7 @@ const fs = require('fs');
 const axios = require('axios');
 const AWS = require('aws-sdk');
 const { exit } = process;
+const GenerateVersion = require('../../lib/generate-version');
 var CLOUD_FRONT = new AWS.CloudFront();
 
 const requestP = require('request-promise-native');
@@ -59,7 +60,11 @@ async function WEB(args) {
         tag: `v${release}`
       });
     } catch (reason) {
-      console.log(reason);
+      if (reason?.status && reason.status === 404) {
+        throw(`Invalid GITHUB_TOKEN or no release found with tag ${release} found on ${owner}/${repo}.`);
+      } else {
+        console.log(reason);
+      }
     }
 
     if (response.data.assets[0]) {
@@ -111,15 +116,11 @@ async function WEB(args) {
   Executing:
     tfc output get --workspace ${deployrc.environments[args.environment]}
   `));
-    let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: false }).stdout;
+    let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}xx`, { silent: true }).stdout;
     try {
-      console.log(chalk.grey(Output));
       Output = JSON.parse(Output);
-    } catch (error) {
-      console.log(chalk.redBright('Error: Could not get Output of Infrastructure.'));
-      console.log(error);
-      console.log(Output);
-      exit(1);
+    } catch (reason) {
+      throw(`Invalid TFC_TOKEN or incorrect workspace named ${deployrc.environments[args.environment]}.`);
     }
 
 
@@ -141,7 +142,7 @@ async function WEB(args) {
     S3 Bucket Domain: ${chalk.white(TargetWebsite.s3_bucket_domain)}
   `));
 
-    // console.log(await STS.getCallerIdentity().promise());
+    GenerateVersion(Output, 'build/version.json');
 
     // upload build/* to website S3 bucket
     console.log(chalk.yellowBright('\nUploading Artifacts'));
@@ -175,7 +176,7 @@ async function WEB(args) {
 
     // test version.json on website via CDN matches build/version.json
     console.log(chalk.yellowBright('\nTesting Deployment'));
-    console.log(chalk.gray('Validateing deployed verison.json hash.\n'));
+    console.log(chalk.gray('Validating deployed verison.json hash.\n'));
     var config = {
       method: 'get',
       url: `https://${TargetWebsite.domain}/version.json`,
@@ -192,7 +193,10 @@ async function WEB(args) {
     console.log(chalk.greenBright('Deployment Successfull !!!'));
     console.log(`::set-output name=ENV_URL::https://${TargetWebsite.domain}`);
   } catch (error) {
-    console.log(chalk.redBright(`Error: ${error}`));
+    console.log(chalk.redBright(`Error: ${error}`))
+    if (error.stack && args.dryRun) {
+      console.log(chalk.gray(error.stack));;
+    }
     exit(1);
   }
 }
