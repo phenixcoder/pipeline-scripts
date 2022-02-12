@@ -5,14 +5,10 @@ const shell = require('shelljs');
 const { exit } = process;
 const GenerateVersion = require('../lib/generate-version');
 const DeployRC = require('../lib/deployrc');
+const Log = require('../lib/logger');
 
 
 async function GENERATE_VERSION(args) {
-  function Log(...logArgs) {
-    if (args.debug) {
-      console.log(...logArgs);
-    }
-  }
 
   try {
     // Usage Example : pipeline generate-version --environment production
@@ -35,13 +31,18 @@ async function GENERATE_VERSION(args) {
   Executing:
     tfc output get --workspace ${deployrc.environments[args.environment]}
   `));
-    let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: true }).stdout;
+    let { stdout, stderr, code  } = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: true });
+    let Output;
     try {
-      Output = JSON.parse(Output);
+      if (code !== 0) {
+        throw `Error fetching Site information (${code})`;
+      }  
+      Output = JSON.parse(stdout);
+
     } catch (error) {
       console.log(chalk.redBright('Error: Could not get Output of Infrastructure.'));
       console.log(error);
-      console.log(Output);
+      console.log(stderr);
       exit(1);
     }
 
