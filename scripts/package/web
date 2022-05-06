@@ -19,6 +19,7 @@ function WEB(args) {
     cra: 'Create React App',
     unknown: 'Unknown'
   };
+  const deployrc = DeployRC();
   console.log(chalk.white(`📦 Packaging WebApp ${currentProject.name} into`), `./${PACKAGE_PATH}`);
   console.log(chalk.yellow('Environment: '), BUILD_ENV);
   const PROJECT_STYLE = currentProject.dependencies.gatsby ? 'gatsby' : currentProject.dependencies['react-scripts'] ? 'cra' : 'unknown';
@@ -46,7 +47,13 @@ function WEB(args) {
   console.log(chalk.green('⚙️  Genenrating'), chalk.greenBright('version.json'));
   shell.mkdir('public');
 
-  let Output = shell.exec(`tfc output get --workspace ${DeployRC().environments['production']}`, { silent: false }).stdout;
+  let Output = shell.exec(`tfc output get --workspace ${deployrc.environments['production']}`, { silent: false }).stdout;
+  try {
+    Output = JSON.parse(Output);
+  } catch (reason) {
+    throw(`Invalid TFC_TOKEN or incorrect workspace named ${deployrc.environments[args.environment]}.`);
+  }
+
   GenerateVersion(Output, 'public/version.json');
 
   console.log(chalk.gray('version.json created at'), chalk.whiteBright(path.resolve('public/version.json')));
