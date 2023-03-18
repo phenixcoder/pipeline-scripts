@@ -123,7 +123,6 @@ async function WEB(args) {
       throw(`Invalid TFC_TOKEN or incorrect workspace named ${deployrc.environments[args.environment]}.`);
     }
 
-
     const TargetWebsite = Output.websites.find(({ name }) => name === deployrc.name);
     if (!TargetWebsite) {
       console.log(chalk.redBright('Error: Website not available in Infrastructure.'));
