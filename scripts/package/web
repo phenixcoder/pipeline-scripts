@@ -17,16 +17,23 @@ function WEB(args) {
   const WEB_PROJECT_STYLES = {
     gatsby: 'Gatsby Js',
     cra: 'Create React App',
+    vite: 'Vite',
     unknown: 'Unknown'
   };
   // const deployrc = DeployRC();
   console.log(chalk.white(`📦 Packaging WebApp ${currentProject.name} into`), `./${PACKAGE_PATH}`);
   console.log(chalk.yellow('Environment: '), BUILD_ENV);
-  const PROJECT_STYLE = currentProject.dependencies.gatsby ? 'gatsby' : currentProject.dependencies['react-scripts'] ? 'cra' : 'unknown';
+  const PROJECT_STYLE = currentProject.dependencies.gatsby 
+    ? 'gatsby' 
+    : currentProject.dependencies['react-scripts'] 
+      ? 'cra' 
+      : currentProject.dependencies.vite 
+        ? 'vite' 
+        : 'unknown';
   console.log(`Current Project Style: ${chalk.greenBright(WEB_PROJECT_STYLES[PROJECT_STYLE])}`);
 
-  if (PROJECT_STYLE !== 'gatsby' || PROJECT_STYLE === 'unknown') {
-    console.log(chalk.redBright('🚫 Cannot continue. Only Gatsby Projects are supported.'));
+  if (PROJECT_STYLE !== 'gatsby' && PROJECT_STYLE !== 'vite') {
+    console.log(chalk.redBright('🚫 Cannot continue. Only Gatsby and Vite Projects are supported.'));
     exit(1);
   }
 
@@ -36,6 +43,7 @@ function WEB(args) {
     PACKAGE_PATH,
     '.cache',
     'public',
+    'dist', // Vite
     'build.zip'
   ].forEach(dir => {
     if (fs.existsSync(dir)) {
@@ -48,7 +56,12 @@ function WEB(args) {
   shell.exec('npm run build');
 
   console.log(chalk.green('🎁  Packaging artifact'));
-  shell.mv('public', PACKAGE_PATH);
+
+  if (PROJECT_STYLE === 'gatsby') {
+    shell.mv('public', PACKAGE_PATH);
+  } else if (PROJECT_STYLE === 'vite') {
+    shell.mv('dist', PACKAGE_PATH);
+  }
 
   // zip -r build.zip ./build/*
   const PWD = shell.pwd();
@@ -59,7 +72,7 @@ function WEB(args) {
   shell.cd(PWD);
   console.log(chalk.gray('Artifact created at'), chalk.whiteBright(ArtifactPath));
 
-  // Releaseing a version and publishing artifact to Github releases (Artifactory)
+  // Releasing a version and publishing artifact to Github releases (Artifactory)
   console.log(chalk.green('\n📢 Publishing a release artifact'));
   shell.exec('npm run release');
   return;
