@@ -14,7 +14,7 @@ const GENERATE_VERSION = require('./generate-version');
 
 function PrintHeader() {
   console.log(
-    `${chalk.whiteBright(PackageJSON.name.toLocaleUpperCase())} ${chalk.gray(PackageJSON.version)} `,
+    `${chalk.white(PackageJSON.name.toLocaleUpperCase())} ${chalk.gray(PackageJSON.version)} `,
   );
   console.log(chalk.white(PackageJSON.description));
 }
@@ -95,7 +95,7 @@ yargs(hideBin(process.argv))
           break;
         case 'web':
           console.log(
-            `Deploying ${chalk.yellow('Website')}\n${chalk.whiteBright(argv.release)} to ${chalk.whiteBright(argv.environment)}`,
+            `Deploying ${chalk.yellow('Website')}\n${chalk.white(argv.release)} to ${chalk.white(argv.environment)}`,
           );
           DEPLOY_WEB(argv);
           break;
