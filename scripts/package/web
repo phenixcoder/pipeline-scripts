@@ -106,17 +106,14 @@ function WEB(args) {
   console.log(`zip -r ${ArtifactPath} ./*`);
   // shell.exec(`zip -r ${ArtifactPath} ./*`);
   shell.cd(PWD);
-  console.log(
-    chalk.gray('Artifact created at'),
-    chalk.whiteBright(ArtifactPath),
-  );
+  console.log(chalk.gray('Artifact created at'), chalk.white(ArtifactPath));
 
   // Releasing a version and publishing artifact to Github releases (Artifactory)
   console.log(chalk.green('\n📢 Publishing a release artifact'));
 
   // Get current branch
   const currentBranch = shell.exec('git branch --show-current').stdout.trim();
-  console.log(chalk.gray('Current branch:'), chalk.whiteBright(currentBranch));
+  console.log(chalk.gray('Current branch:'), chalk.white(currentBranch));
   const branches = ['main'];
 
   // check if debug param is passed
@@ -133,13 +130,10 @@ function WEB(args) {
     console.log(branches);
 
     console.log(chalk.yellow('🚧 Github Token'));
-    console.log(
-      chalk.gray('GH_TOKEN:'),
-      chalk.whiteBright(process.env.GH_TOKEN),
-    );
+    console.log(chalk.gray('GH_TOKEN:'), chalk.white(process.env.GH_TOKEN));
     console.log(
       chalk.gray('GITHUB_TOKEN:'),
-      chalk.whiteBright(process.env.GITHUB_TOKEN),
+      chalk.white(process.env.GITHUB_TOKEN),
     );
   }
 
@@ -153,7 +147,7 @@ function WEB(args) {
   branches.forEach((branch) => {
     console.log(
       '- ',
-      chalk.whiteBright(branch),
+      chalk.white(branch),
       branch === currentBranch ? chalk.greenBright('(Current)') : '',
     );
   });
