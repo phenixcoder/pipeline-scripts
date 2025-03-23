@@ -17,7 +17,7 @@ function LIB(args) {
   console.log(chalk.green('🧹 Cleaning up'));
   [
     // Nothing to remove
-  ].forEach(dir => {
+  ].forEach((dir) => {
     if (fs.existsSync(dir)) {
       console.log(chalk.gray(`Removing ${dir}`));
       shell.rm('-rf', dir);
@@ -37,8 +37,8 @@ function LIB(args) {
   // Releaseing a version and publishing a new verison to NPM (Artifactory)
   console.log(chalk.green('\n📢 Publishing a release'));
   shell.exec('npm run release');
-  
-  return ;
+
+  return;
 }
 
 module.exports = LIB;

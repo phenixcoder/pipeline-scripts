@@ -18,11 +18,12 @@ jobs:
           node-version: 14
       - name: Setup and install dependencies
         run: |
-          npm ci
+          npm i pnpm -g
+          pnpm install
       - name: Test
-        run: npm run test
+        run: pnpm run test
       - name: Build
-        run: npm run build
+        run: pnpm run build
   Publish:
     runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' }}
@@ -35,10 +36,11 @@ jobs:
           node-version: 14
       - name: Package 📦
         run: |
-          npm ci
-          npm run build
+          npm i pnpm -g
+          pnpm install
+          pnpm run build
       - name: Publish 🚀
-        run: npm run release
+        run: pnpm run release
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

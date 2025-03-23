@@ -17,7 +17,6 @@ const PackageJSON = require('../../lib/package-json');
 const sync = require('../../lib/s3-sync');
 
 async function WEB(args) {
-
   try {
     // Usage Example : pipeline deploy web --release 1.1.0 --environment production
     args.debug && console.log(args);
@@ -29,39 +28,54 @@ async function WEB(args) {
     if (release && /[0-9]+\.[0-9]+\.[0-9]+/.test(release)) {
       // check if release is a version
     } else {
-      console.log(chalk.redBright('🚫 Cannot continue. Invalid release passed.'));
+      console.log(
+        chalk.redBright('🚫 Cannot continue. Invalid release passed.'),
+      );
       exit(1);
     }
 
     const package = PackageJSON();
     const deployrc = DeployRC();
     if (!deployrc.environments[environment]) {
-      console.log(chalk.redBright('🚫 Cannot continue. Invalid environment passed.'));
-      console.log(`Valid environments:\n${Object.keys(deployrc.environments).map(env => chalk.yellow(' - ') + env).join('\n')}`);
+      console.log(
+        chalk.redBright('🚫 Cannot continue. Invalid environment passed.'),
+      );
+      console.log(
+        `Valid environments:\n${Object.keys(deployrc.environments)
+          .map((env) => chalk.yellow(' - ') + env)
+          .join('\n')}`,
+      );
       exit(1);
     }
 
-    const releasePackageUrl = package.repository.url.replace(/\.git$/, '').replace('https://github.com/', '');
+    const releasePackageUrl = package.repository.url
+      .replace(/\.git$/, '')
+      .replace('https://github.com/', '');
     const [owner, repo] = releasePackageUrl.split('/');
     const octokit = Github();
 
     console.log(chalk.yellowBright('\nFetch Build Artifact'));
-    console.log(chalk.gray(`
+    console.log(
+      chalk.gray(`
   Owner: ${chalk.white(owner)}
   Repo: ${chalk.white(repo)}
   Release: v${chalk.white(release)}
-  `));
+  `),
+    );
 
     let response;
     try {
-      response = await octokit.request('GET /repos/{owner}/{repo}/releases/tags/{tag}', {
-        owner,
-        repo,
-        tag: `v${release}`
-      });
+      response = await octokit.request(
+        'GET /repos/{owner}/{repo}/releases/tags/{tag}',
+        {
+          owner,
+          repo,
+          tag: `v${release}`,
+        },
+      );
     } catch (reason) {
       if (reason?.status && reason.status === 404) {
-        throw(`Invalid GITHUB_TOKEN or no release found with tag ${release} found on ${owner}/${repo}.`);
+        throw `Invalid GITHUB_TOKEN or no release found with tag ${release} found on ${owner}/${repo}.`;
       } else {
         console.log(reason);
       }
@@ -82,12 +96,11 @@ async function WEB(args) {
       response = await requestP.get({
         url: `https://${process.env.GITHUB_TOKEN}:@api.github.com/repos/${owner}/${repo}/releases/assets/${response.data.assets[0].id}`,
         headers: {
-          'Accept': 'application/octet-stream',
+          Accept: 'application/octet-stream',
           'User-Agent': 'pipeline-helpers',
         },
-        encoding: null // secret scauce :D
+        encoding: null, // secret scauce :D
       });
-
     } catch (reason) {
       console.log(chalk.red('Error Downloading Artifact'));
       console.log(reason);
@@ -109,29 +122,44 @@ async function WEB(args) {
 
     // fetch site info from terraform cloud
     console.log(chalk.yellowBright('\nFetch site information'));
-    console.log(chalk.gray(`
+    console.log(
+      chalk.gray(`
   Terraform workspace Id: ${deployrc.environments[args.environment]}
   Environment: ${args.environment}
 
   Executing:
     tfc output get --workspace ${deployrc.environments[args.environment]}
-  `));
-    let Output = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: true }).stdout;
+  `),
+    );
+    let Output = shell.exec(
+      `tfc output get --workspace ${deployrc.environments[args.environment]}`,
+      { silent: true },
+    ).stdout;
     try {
       Output = JSON.parse(Output);
     } catch (reason) {
-      throw(`Invalid TFC_TOKEN or incorrect workspace named ${deployrc.environments[args.environment]}.`);
+      throw `Invalid TFC_TOKEN or incorrect workspace named ${deployrc.environments[args.environment]}.`;
     }
 
-    const TargetWebsite = Output.websites.find(({ name }) => name === deployrc.name);
+    const TargetWebsite = Output.websites.find(
+      ({ name }) => name === deployrc.name,
+    );
     if (!TargetWebsite) {
-      console.log(chalk.redBright('Error: Website not available in Infrastructure.'));
+      console.log(
+        chalk.redBright('Error: Website not available in Infrastructure.'),
+      );
       console.log(chalk.green('Expected'), deployrc.name);
-      console.log(chalk.green('Available websites in Infrastructure:\n'), Output.websites.map(({ name }) => chalk.yellow(` * ${name}`)).join('\n'));
+      console.log(
+        chalk.green('Available websites in Infrastructure:\n'),
+        Output.websites
+          .map(({ name }) => chalk.yellow(` * ${name}`))
+          .join('\n'),
+      );
       exit(1);
     }
 
-    console.log(chalk.gray(`
+    console.log(
+      chalk.gray(`
   ${chalk.green('Website found.')}
 
     Name: ${chalk.white(TargetWebsite.name)}
@@ -139,16 +167,19 @@ async function WEB(args) {
     Domain: ${chalk.white(TargetWebsite.domain)}
     S3 Bucket: ${chalk.white(TargetWebsite.s3_bucket)} 
     S3 Bucket Domain: ${chalk.white(TargetWebsite.s3_bucket_domain)}
-  `));
+  `),
+    );
 
     GenerateVersion(Output, 'build/version.json');
 
     // upload build/* to website S3 bucket
     console.log(chalk.yellowBright('\nUploading Artifacts'));
     console.log(chalk.gray('Uploading artifacts to S3 bucket.\n'));
-    console.log(chalk.gray(`
+    console.log(
+      chalk.gray(`
   Target S3 bucket: ${TargetWebsite.s3_bucket}
-  `));
+  `),
+    );
     shell.rm('-rf', './build/__MACOSX');
     if (!args.dryRun) {
       await sync('./build', TargetWebsite.s3_bucket);
@@ -162,15 +193,21 @@ async function WEB(args) {
         CallerReference: Date.now().toString(),
         Paths: {
           Quantity: 1,
-          Items: [
-            '/*',
-          ]
-        }
-      }
+          Items: ['/*'],
+        },
+      },
     };
-    console.log(chalk.gray('Distribution Id'), TargetWebsite.cloudfront_distribution_id);
+    console.log(
+      chalk.gray('Distribution Id'),
+      TargetWebsite.cloudfront_distribution_id,
+    );
     if (!args.dryRun) {
-      console.log(chalk.gray('Invalidation link:'), await (await CLOUD_FRONT.createInvalidation(invalidationParams).promise()).Location);
+      console.log(
+        chalk.gray('Invalidation link:'),
+        await (
+          await CLOUD_FRONT.createInvalidation(invalidationParams).promise()
+        ).Location,
+      );
     }
 
     // test version.json on website via CDN matches build/version.json
@@ -179,22 +216,24 @@ async function WEB(args) {
     var config = {
       method: 'get',
       url: `https://${TargetWebsite.domain}/version.json`,
-      headers: {}
+      headers: {},
     };
 
     const fetchedVersion = (await axios(config)).data;
     const localVersion = JSON.parse(fs.readFileSync('./build/version.json'));
-    console.log(chalk.gray(`
+    console.log(
+      chalk.gray(`
   Deployment hashes matched.
   Deployed Hash: ${chalk.white(fetchedVersion.hash)}
   Local Hash:    ${chalk.white(localVersion.hash)}
-  `));
+  `),
+    );
     console.log(chalk.greenBright('Deployment Successfull !!!'));
     console.log(`::set-output name=ENV_URL::https://${TargetWebsite.domain}`);
   } catch (error) {
     console.log(chalk.redBright(`Error: ${error}`));
     if (error.stack && args.dryRun) {
-      console.log(chalk.gray(error.stack));;
+      console.log(chalk.gray(error.stack));
     }
     exit(1);
   }

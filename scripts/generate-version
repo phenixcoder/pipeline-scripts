@@ -7,40 +7,48 @@ const GenerateVersion = require('../lib/generate-version');
 const DeployRC = require('../lib/deployrc');
 const Log = require('../lib/logger');
 
-
 async function GENERATE_VERSION(args) {
-
   try {
     // Usage Example : pipeline generate-version --environment production
     args.debug && Log(args);
     const { environment } = args;
     const deployrc = DeployRC();
-    
+
     if (!deployrc.environments[environment]) {
       Log(chalk.redBright('🚫 Cannot continue. Invalid environment passed.'));
-      Log(`Valid environments:\n${Object.keys(deployrc.environments).map(env => chalk.yellow(' - ') + env).join('\n')}`);
+      Log(
+        `Valid environments:\n${Object.keys(deployrc.environments)
+          .map((env) => chalk.yellow(' - ') + env)
+          .join('\n')}`,
+      );
       exit(1);
     }
 
     // fetch site info from terraform cloud
     Log(chalk.yellowBright('\nFetch site information'));
-    Log(chalk.gray(`
+    Log(
+      chalk.gray(`
   Terraform workspace Id: ${deployrc.environments[args.environment]}
   Environment: ${args.environment}
 
   Executing:
     tfc output get --workspace ${deployrc.environments[args.environment]}
-  `));
-    let { stdout, stderr, code  } = shell.exec(`tfc output get --workspace ${deployrc.environments[args.environment]}`, { silent: true });
+  `),
+    );
+    let { stdout, stderr, code } = shell.exec(
+      `tfc output get --workspace ${deployrc.environments[args.environment]}`,
+      { silent: true },
+    );
     let Output;
     try {
       if (code !== 0) {
         throw `Error fetching Site information (${code})`;
-      }  
+      }
       Output = JSON.parse(stdout);
-
     } catch (error) {
-      console.log(chalk.redBright('Error: Could not get Output of Infrastructure.'));
+      console.log(
+        chalk.redBright('Error: Could not get Output of Infrastructure.'),
+      );
       console.log(error);
       console.log(stderr);
       exit(1);
@@ -50,7 +58,7 @@ async function GENERATE_VERSION(args) {
   } catch (error) {
     console.log(chalk.redBright(`Error: ${error}`));
     if (error.stack && args.dryRun) {
-      console.log(chalk.gray(error.stack));;
+      console.log(chalk.gray(error.stack));
     }
     exit(1);
   }

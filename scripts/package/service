@@ -15,9 +15,7 @@ function SERVICE(args) {
 
   // # Cleanup
   console.log(chalk.green('🧹 Cleaning up'));
-  [
-    'build'
-  ].forEach(dir => {
+  ['build'].forEach((dir) => {
     if (fs.existsSync(dir)) {
       console.log(chalk.gray(`Removing ${dir}`));
       shell.rm('-rf', dir);
