@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const semanticRelease = require('semantic-release');
 const chalk = require('chalk');
 const fs = require('fs');
 const shell = require('shelljs');
@@ -9,11 +10,27 @@ const PackageJSON = require('../../lib/package-json');
 const path = require('path');
 const { exit } = process;
 
+function checkDependencyExists(dependency, config) {
+  return config.dependencies[dependency] || config.devDependencies[dependency];
+}
+
+function getCleanupList(style) {
+  switch (style) {
+  case 'gatsby':
+    return ['public', '.cache'];
+  case 'cra':
+    return ['build'];
+  case 'vite':
+    return ['dist'];
+  default:
+    return [];
+  }
+}
+
 function WEB(args) {
-  // PACKAGE_PATH="build"
-  const PACKAGE_PATH = args.packagePath || 'build';
-  const BUILD_ENV = args.env || 'production';
   const currentProject = PackageJSON();
+  const PACKAGE_PATH = args.packagePath || checkDependencyExists('vite', currentProject) ? 'dist' : 'build';
+  const BUILD_ENV = args.env || 'production';
   const WEB_PROJECT_STYLES = {
     gatsby: 'Gatsby Js',
     cra: 'Create React App',
@@ -23,12 +40,13 @@ function WEB(args) {
   // const deployrc = DeployRC();
   console.log(chalk.white(`📦 Packaging WebApp ${currentProject.name} into`), `./${PACKAGE_PATH}`);
   console.log(chalk.yellow('Environment: '), BUILD_ENV);
-  const PROJECT_STYLE = currentProject.dependencies.gatsby 
-    ? 'gatsby' 
-    : currentProject.dependencies['react-scripts'] 
-      ? 'cra' 
-      : currentProject.dependencies.vite 
-        ? 'vite' 
+
+  const PROJECT_STYLE = checkDependencyExists('gatsby', currentProject)
+    ? 'gatsby'
+    : checkDependencyExists('react-scripts', currentProject)
+      ? 'cra'
+      : checkDependencyExists('vite', currentProject)
+        ? 'vite'
         : 'unknown';
   console.log(`Current Project Style: ${chalk.greenBright(WEB_PROJECT_STYLES[PROJECT_STYLE])}`);
 
@@ -39,13 +57,12 @@ function WEB(args) {
 
   // # Cleanup
   console.log(chalk.green('🧹 Cleaning up'));
-  [
-    PACKAGE_PATH,
-    '.cache',
-    'public',
-    'dist', // Vite
-    'build.zip'
-  ].forEach(dir => {
+
+  const cleanupList = getCleanupList(PROJECT_STYLE);
+  cleanupList.push('build.zip');
+  cleanupList.push(PACKAGE_PATH);
+
+  cleanupList.forEach(dir => {
     if (fs.existsSync(dir)) {
       console.log(chalk.gray(`Removing ${dir}`));
       shell.rm('-rf', dir);
@@ -53,28 +70,93 @@ function WEB(args) {
   });
 
   console.log(chalk.green('🏗  Genenrating Build'));
-  shell.exec('npm run build');
+  const buildResponse = shell.exec('npm run build');
+
+  if (buildResponse.code !== 0) {
+    console.log(chalk.red('🚫 Build failed. Exiting.'));
+    console.debug(buildResponse);
+    exit(1);
+  }
 
   console.log(chalk.green('🎁  Packaging artifact'));
 
+  console.debug('Current Project:', PACKAGE_PATH);
+
   if (PROJECT_STYLE === 'gatsby') {
     shell.mv('public', PACKAGE_PATH);
-  } else if (PROJECT_STYLE === 'vite') {
-    shell.mv('dist', PACKAGE_PATH);
   }
 
   // zip -r build.zip ./build/*
-  const PWD = shell.pwd();
-  shell.cd(PACKAGE_PATH);
+  const PWD = shell.pwd().toString();
+  console.debug('PWD:', PWD);
+  shell.cd(path.join(PWD, PACKAGE_PATH));
   const ArtifactPath = path.resolve('../build.zip');
   console.log(`zip -r ${ArtifactPath} ./*`);
-  shell.exec(`zip -r ${ArtifactPath} ./*`);
+  // shell.exec(`zip -r ${ArtifactPath} ./*`);
   shell.cd(PWD);
   console.log(chalk.gray('Artifact created at'), chalk.whiteBright(ArtifactPath));
 
   // Releasing a version and publishing artifact to Github releases (Artifactory)
   console.log(chalk.green('\n📢 Publishing a release artifact'));
-  shell.exec('npm run release');
+
+  // Get current branch
+  const currentBranch = shell.exec('git branch --show-current').stdout.trim();
+  console.log(chalk.gray('Current branch:'), chalk.whiteBright(currentBranch));
+  const branches = ['main'];
+
+  // check if debug param is passed
+  const isDebug = args.debug || false;
+  if (isDebug) {
+    console.log(chalk.yellow('🐞 Debug mode enabled'));
+    if (currentBranch != 'main') {
+      branches.push({
+        name: currentBranch,
+        prerelease: true
+      });
+    }
+    console.log(chalk.gray('Running on branches:'));
+    console.log(branches);
+
+    console.log(chalk.yellow('🚧 Github Token'));
+    console.log(chalk.gray('GH_TOKEN:'), chalk.whiteBright(process.env.GH_TOKEN));
+    console.log(chalk.gray('GITHUB_TOKEN:'), chalk.whiteBright(process.env.GITHUB_TOKEN));
+
+  }
+
+  if (!branches.includes(currentBranch)) {
+    console.log(chalk.red('🚫 Invalid branch. Only main branch is supported.'));
+    exit(1);
+  }
+  console.log(chalk.green('🚀 Releasing version'));
+
+  console.log(chalk.gray('Running Allowed Branches:'));
+  branches.forEach(branch => {
+    console.log('- ', chalk.whiteBright(branch), (branch === currentBranch) ? chalk.greenBright('(Current)') : '');
+  });
+  
+
+  semanticRelease({
+    branches: branches,
+    ci: false,
+    plugins: [
+      '@semantic-release/commit-analyzer',
+      '@semantic-release/release-notes-generator',
+      ['@semantic-release/github',
+        {
+          'assets': [
+            {
+              'path': 'build.zip',
+              'label': 'Build Package'
+            },
+            {
+              'path': 'RELEASE_NOTES.md',
+              'label': 'Release Notes'
+            }
+          ]
+        }
+      ],
+    ]
+  });
   return;
 }
 
