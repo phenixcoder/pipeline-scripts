@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import semanticRelease, { BranchSpec } from 'semantic-release';
+import semanticRelease, { BranchSpec, PluginSpec } from 'semantic-release';
 
 import chalk from 'chalk';
 import fs from 'fs';
@@ -164,28 +164,76 @@ function WEB(args: Args): void {
     );
   });
 
+  // Checkl if exec commands exists in scripts/pipeline folder in currecnt project
+  const pipelinePath = path.join(process.cwd(), 'scripts/pipeline');
+
+  const execConfig: PluginSpec = ['@semantic-release/exec', {}];
+  const plugins: PluginSpec[] = [
+    '@semantic-release/commit-analyzer',
+    '@semantic-release/release-notes-generator',
+    [
+      '@semantic-release/github',
+      {
+        assets: [
+          {
+            path: 'build.zip',
+            label: 'Build Package',
+          },
+          {
+            path: 'RELEASE_NOTES.md',
+            label: 'Release Notes',
+          },
+        ],
+      },
+    ],
+  ];
+
+  if (fs.existsSync(pipelinePath)) {
+    const pipelineCommands = [
+      'verifyConditionsCmd',
+      'analyzeCommitsCmd',
+      'verifyReleaseCmd',
+      'generateNotesCmd',
+      'prepareCmd',
+      'addChannelCmd',
+      'publishCmd',
+      'successCmd',
+      'failCmd',
+    ];
+    const options: Record<string, string> = {};
+    pipelineCommands.forEach((cmd) => {
+      const cmdPathJS = path.join(pipelinePath, `${cmd}.js`);
+      const cmdPathShell = path.join(pipelinePath, `${cmd}.sh`);
+      if (fs.existsSync(cmdPathJS) || fs.existsSync(cmdPathShell)) {
+        const cmdPath = fs.existsSync(cmdPathJS) ? cmdPathJS : cmdPathShell;
+        console.log(
+          chalk.blackBright(
+            `Adding ${cmd} command from ${chalk.whiteBright(cmdPath)}`,
+          ),
+        );
+        const suffix = '${nextRelease.version}';
+
+        options[cmd] = fs.existsSync(cmdPathJS)
+          ? `node ${cmdPath} ${suffix}`
+          : `${cmdPath} ${suffix}`;
+      }
+    });
+
+    execConfig[1] = options;
+    plugins.push(execConfig);
+  }
+
+  if (isDebug) {
+    console.log(chalk.yellow('🐞 Debug mode enabled'));
+    console.log(chalk.blackBright('Running with plugins:'));
+    console.log(plugins);
+  }
+
   semanticRelease({
     branches: branches,
     ci: false,
-    plugins: [
-      '@semantic-release/commit-analyzer',
-      '@semantic-release/release-notes-generator',
-      [
-        '@semantic-release/github',
-        {
-          assets: [
-            {
-              path: 'build.zip',
-              label: 'Build Package',
-            },
-            {
-              path: 'RELEASE_NOTES.md',
-              label: 'Release Notes',
-            },
-          ],
-        },
-      ],
-    ],
+    dryRun: isDebug,
+    plugins,
   });
   return;
 }

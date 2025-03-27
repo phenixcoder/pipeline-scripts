@@ -7,10 +7,6 @@ import DEPLOY_WEB from './deploy/web';
 import LIB from './package/lib';
 import SERVICE from './package/service';
 import Version from './generate/version';
-console.log(
-  'Resolved package-json path:',
-  require.resolve('../lib/package-json'),
-);
 import PackageJSON from '../lib/package-json';
 import yargs from 'yargs';
 import { DeployArgs, GenerateArgs, PackageArgs } from '../types';
@@ -71,85 +67,101 @@ function deployCommandHandler(argv: DeployArgs): void {
 }
 
 function CLI() {
-  return yargs(hideBin(process.argv))
-    .command<PackageArgs>(
-      ['package <type>'],
-      'Package command to test, build and package an artifact.',
-      (yargs) => {
-        return yargs
-          .option('h', {
-            alias: 'host',
-            type: 'string',
-            describe: 'Base domain for this build.',
-            requiresArg: true,
-          })
-          .option('p', {
-            alias: 'package-path',
-            type: 'string',
-            describe: 'Build directory relative to current directory.',
-            requiresArg: true,
-          })
-          .option('debug', {
-            describe: 'Enable debugging',
-            type: 'boolean',
-          });
-      },
-      (argv: PackageArgs) => {
-        PrintHeader();
-        switch (argv.type) {
-          case 'lib':
-            console.log(`Packaging ${chalk.yellow('Library')}`);
-            LIB(argv);
-            break;
-          case 'web':
-            console.log(`Packaging ${chalk.yellow('Website')}`);
-            WEB(argv);
-            break;
-          case 'service':
-            console.log(`Packaging ${chalk.yellow('Service')}`);
-            SERVICE(argv);
-            break;
+  return (
+    yargs(hideBin(process.argv))
+      // .name('Pipeline Scripts CLI')
+      .version(currentProject.version)
+      .usage('Usage: pipeline <command> [options]')
+      .epilogue(
+        `
+===========================================
+${chalk.greenBright('Pipeline Scripts CLI')}
 
-          default:
-            console.log(chalk.red(`Invalid package type "${argv.type}"`));
-            break;
-        }
-      },
-    )
-    .command<DeployArgs>(
-      ['deploy <type>'],
-      'Deploy a release to an environment',
-      deployCommandConfig,
-      deployCommandHandler,
-    )
-    .command(
-      ['generate-config'],
-      'Generates version.json for passed environment',
-      (yargs) => {
-        return yargs
-          .option('e', {
-            alias: 'environment',
-            default: 'production',
-            describe: 'Deployment environment',
-          })
-          .option('debug', {
-            describe: 'Enable debugging',
-          });
-      },
-      (argv) => {
-        PrintHeader();
-        Version(argv as GenerateArgs);
-      },
-    )
-    .command(
-      ['init-repo <type>'],
-      'Intialise pipeline of app type',
-      {},
-      (argv) => {
-        console.log('init-repo', argv.type, 'type');
-      },
-    )
-    .demandCommand().argv;
+CLI for automation script for package, deploy and generate version.json. for various project types.
+
+Version: ${currentProject.version}
+===========================================
+    `,
+      )
+      .command<PackageArgs>(
+        ['package <type>'],
+        'Package command to test, build and package an artifact.',
+        (yargs) => {
+          return yargs
+            .option('h', {
+              alias: 'host',
+              type: 'string',
+              describe: 'Base domain for this build.',
+              requiresArg: true,
+            })
+            .option('p', {
+              alias: 'package-path',
+              type: 'string',
+              describe: 'Build directory relative to current directory.',
+              requiresArg: true,
+            })
+            .option('debug', {
+              describe: 'Enable debugging',
+              type: 'boolean',
+            });
+        },
+        (argv: PackageArgs) => {
+          PrintHeader();
+          switch (argv.type) {
+            case 'lib':
+              console.log(`Packaging ${chalk.yellow('Library')}`);
+              LIB(argv);
+              break;
+            case 'web':
+              console.log(`Packaging ${chalk.yellow('Website')}`);
+              WEB(argv);
+              break;
+            case 'service':
+              console.log(`Packaging ${chalk.yellow('Service')}`);
+              SERVICE(argv);
+              break;
+
+            default:
+              console.log(chalk.red(`Invalid package type "${argv.type}"`));
+              break;
+          }
+        },
+      )
+      .command<DeployArgs>(
+        ['deploy <type>'],
+        'Deploy a release to an environment',
+        deployCommandConfig,
+        deployCommandHandler,
+      )
+      .command(
+        ['generate-config'],
+        'Generates version.json for passed environment',
+        (yargs) => {
+          return yargs
+            .option('e', {
+              alias: 'environment',
+              default: 'production',
+              describe: 'Deployment environment',
+            })
+            .option('debug', {
+              describe: 'Enable debugging',
+            });
+        },
+        (argv) => {
+          PrintHeader();
+          Version(argv as GenerateArgs);
+        },
+      )
+      .command(
+        ['init-repo <type>'],
+        'Intialise pipeline of app type',
+        {},
+        (argv) => {
+          console.log('init-repo', argv.type, 'type');
+        },
+      )
+      .demandCommand().argv
+  );
 }
 
 CLI();
