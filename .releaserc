@@ -8,14 +8,8 @@
     ["@semantic-release/npm", {
       "pkgRoot": "build"
     }],
-    {
-      "verifyConditions": ["@semantic-release/npm"],
-      "prepare": [
-        {
-          "path": "@semantic-release/exec",
-          "cmd": "npm run build && node scripts/strip-dev-config.js ${nextRelease.version} && cp prod.package.json build/package.json && npm shrinkwrap && cp npm-shrinkwrap.json build/"
-        }
-      ]
-    }
+    ["@semantic-release/exec", {
+      "prepareCmd": "npm run build && node scripts/strip-dev-config.js ${nextRelease.version} && cp prod.package.json build/package.json && npm shrinkwrap && cp npm-shrinkwrap.json build/"
+    }]
   ]
 }
