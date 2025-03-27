@@ -17,6 +17,8 @@ import PackageJSON from '../../lib/package-json';
 import sync from '../../lib/s3-sync';
 import { DeployArgs as Args } from '../../types';
 import Log from '../../lib/logger';
+import { URL } from 'url';
+import { resolve } from 'path';
 
 interface Output {
   environment: string;
@@ -28,6 +30,28 @@ interface Output {
     s3_bucket: string;
     s3_bucket_domain: string;
   }[];
+}
+
+function getRepoUrlFromGitConfig() {
+  const remoteUrl = shell.exec('git config --get remote.origin.url', {
+    silent: true,
+  }).stdout;
+  // validate remote url and format validation
+  if (!remoteUrl) {
+    throw new Error('Invalid remote url');
+  }
+  // validate remoteUrl is a valid url format
+  try {
+    new URL(remoteUrl);
+  } catch (error) {
+    if (error instanceof Error) {
+      console.log(chalk.redBright('Error: Invalid remote url'));
+      console.log(chalk.redBright(error.message));
+      console.log(chalk.redBright('Remote url:'), remoteUrl);
+    }
+    throw new Error('Invalid remote url');
+  }
+  return remoteUrl;
 }
 
 async function WEB(args: Args): Promise<void> {
@@ -69,11 +93,21 @@ async function WEB(args: Args): Promise<void> {
       exit(1);
     }
 
-    const releasePackageUrl = packageJSON.repository.url
-      .replace(/\.git$/, '')
+    let releasePackageUrl = packageJSON.repository?.url
+      ? packageJSON.repository.url
+      : getRepoUrlFromGitConfig();
+
+    releasePackageUrl = releasePackageUrl
+      .replace('.git', '')
       .replace('https://github.com/', '');
-    const [owner, repo] = releasePackageUrl.split('/');
+
+    console.log('Release Package URL:', releasePackageUrl);
+
+    let [owner, repo] = releasePackageUrl.split('/');
     const octokit = Github();
+
+    owner = owner.trim();
+    repo = repo.trim();
 
     console.log(chalk.yellowBright('\nFetch Build Artifact'));
     console.log(
@@ -96,6 +130,8 @@ async function WEB(args: Args): Promise<void> {
       );
     } catch (error) {
       if (error instanceof Error && 'status' in error && error.status === 404) {
+        console.log(chalk.red('Release not found.'), error);
+
         throw `Invalid GITHUB_TOKEN or no release found with tag ${release} found on ${owner}/${repo}.`;
       } else {
         console.log(error);
@@ -113,6 +149,7 @@ async function WEB(args: Args): Promise<void> {
       exit(1);
     }
 
+    const tempPath = resolve(process.cwd(), `./build-v${release}.zip`);
     try {
       if (response && response.data.assets[0]) {
         response = await requestP.get({
@@ -132,11 +169,11 @@ async function WEB(args: Args): Promise<void> {
       exit(1);
     }
 
-    if (fs.existsSync(`./build-v${release}.zip`)) {
-      fs.unlinkSync(`./build-v${release}.zip`);
+    if (fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath);
     }
 
-    fs.writeFileSync(`./build-v${release}.zip`, response);
+    fs.writeFileSync(tempPath, response);
 
     // extract to build
     if (fs.existsSync('build')) {
