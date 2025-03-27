@@ -1,20 +1,26 @@
 #!/usr/bin/env node
 
-const semanticRelease = require('semantic-release');
-const chalk = require('chalk');
-const fs = require('fs');
-const shell = require('shelljs');
-const PackageJSON = require('../../lib/package-json');
-// const GenerateVersion = require('../../lib/generate-version');
-// const DeployRC = require('../../lib/deployrc');
-const path = require('path');
+import semanticRelease, { BranchSpec } from 'semantic-release';
+
+import chalk from 'chalk';
+import fs from 'fs';
+import shell from 'shelljs';
+import path from 'path';
+import PackageJSON from '../../lib/package-json';
+import { PackageArgs as Args, IPackageJSON } from '../../types';
+
 const { exit } = process;
 
-function checkDependencyExists(dependency, config) {
-  return config.dependencies[dependency] || config.devDependencies[dependency];
+function checkDependencyExists(
+  dependency: string,
+  config: IPackageJSON,
+): boolean {
+  return (
+    !!config.dependencies[dependency] || !!config.devDependencies[dependency]
+  );
 }
 
-function getCleanupList(style) {
+function getCleanupList(style: string): string[] {
   switch (style) {
     case 'gatsby':
       return ['public', '.cache'];
@@ -27,7 +33,7 @@ function getCleanupList(style) {
   }
 }
 
-function WEB(args) {
+function WEB(args: Args): void {
   const currentProject = PackageJSON();
   const PACKAGE_PATH =
     args.packagePath || checkDependencyExists('vite', currentProject)
@@ -55,7 +61,7 @@ function WEB(args) {
         ? 'vite'
         : 'unknown';
   console.log(
-    `Current Project Style: ${chalk.greenBright(WEB_PROJECT_STYLES[PROJECT_STYLE])}`,
+    `Current Project Style: ${chalk.green(WEB_PROJECT_STYLES[PROJECT_STYLE])}`,
   );
 
   if (PROJECT_STYLE !== 'gatsby' && PROJECT_STYLE !== 'vite') {
@@ -76,12 +82,12 @@ function WEB(args) {
 
   cleanupList.forEach((dir) => {
     if (fs.existsSync(dir)) {
-      console.log(chalk.gray(`Removing ${dir}`));
+      console.log(chalk.blackBright(`Removing ${dir}`));
       shell.rm('-rf', dir);
     }
   });
 
-  console.log(chalk.green('🏗  Genenrating Build'));
+  console.log(chalk.green('🏗  Generating Build'));
   const buildResponse = shell.exec('npm run build');
 
   if (buildResponse.code !== 0) {
@@ -106,15 +112,18 @@ function WEB(args) {
   console.log(`zip -r ${ArtifactPath} ./*`);
   // shell.exec(`zip -r ${ArtifactPath} ./*`);
   shell.cd(PWD);
-  console.log(chalk.gray('Artifact created at'), chalk.white(ArtifactPath));
+  console.log(
+    chalk.blackBright('Artifact created at'),
+    chalk.white(ArtifactPath),
+  );
 
   // Releasing a version and publishing artifact to Github releases (Artifactory)
   console.log(chalk.green('\n📢 Publishing a release artifact'));
 
   // Get current branch
   const currentBranch = shell.exec('git branch --show-current').stdout.trim();
-  console.log(chalk.gray('Current branch:'), chalk.white(currentBranch));
-  const branches = ['main'];
+  console.log(chalk.blackBright('Current branch:'), chalk.white(currentBranch));
+  const branches: BranchSpec[] = ['main'];
 
   // check if debug param is passed
   const isDebug = args.debug || false;
@@ -126,13 +135,16 @@ function WEB(args) {
         prerelease: true,
       });
     }
-    console.log(chalk.gray('Running on branches:'));
+    console.log(chalk.blackBright('Running on branches:'));
     console.log(branches);
 
     console.log(chalk.yellow('🚧 Github Token'));
-    console.log(chalk.gray('GH_TOKEN:'), chalk.white(process.env.GH_TOKEN));
     console.log(
-      chalk.gray('GITHUB_TOKEN:'),
+      chalk.blackBright('GH_TOKEN:'),
+      chalk.white(process.env.GH_TOKEN),
+    );
+    console.log(
+      chalk.blackBright('GITHUB_TOKEN:'),
       chalk.white(process.env.GITHUB_TOKEN),
     );
   }
@@ -143,12 +155,12 @@ function WEB(args) {
   }
   console.log(chalk.green('🚀 Releasing version'));
 
-  console.log(chalk.gray('Running Allowed Branches:'));
+  console.log(chalk.blackBright('Running Allowed Branches:'));
   branches.forEach((branch) => {
     console.log(
       '- ',
       chalk.white(branch),
-      branch === currentBranch ? chalk.greenBright('(Current)') : '',
+      branch === currentBranch ? chalk.green('(Current)') : '',
     );
   });
 
@@ -178,4 +190,4 @@ function WEB(args) {
   return;
 }
 
-module.exports = WEB;
+export default WEB;

@@ -1,2 +1,5 @@
 node_modules/ansi-regex/index.d.ts
 node_modules
+build
+prod.package.json
+npm-shrinkwrap.json

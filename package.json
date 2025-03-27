@@ -4,30 +4,32 @@
   "description": "CI/CD Pipeline helpers scripts",
   "main": "index.js",
   "bin": {
-    "pipeline": "./scripts/cli"
+    "pipeline": "./build/scripts/cli"
   },
   "scripts": {
     "test": "echo \"Nothing to test\"",
-    "lint": "eslint '{scripts,lib}/**/*'",
+    "lint": "eslint . --ignore-pattern scripts/ --ignore-pattern build/",
     "prettier": "prettier --write .",
-    "build": "echo \"Nothing to build\"",
-    "release": "semantic-release",
-    "prepare": "husky install"
+    "build": "tsc && mv ./build/scripts/cli.js ./build/scripts/cli && chmod +x ./build/scripts/cli && cp package.json ./build/package.json && cp README.md ./build/README.md",
+    "start": "tsc --watch",
+    "release": "semantic-release"
   },
   "author": "Balwant",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.772.0",
     "@octokit/core": "^6.1.4",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/npm": "^12.0.1",
     "@semantic-release/release-notes-generator": "^14.0.3",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.8.4",
-    "chalk": "^5.4.1",
+    "chalk": "^4.1.2",
     "devops-scripts": "^1.2.3",
     "mime-types": "^2.1.35",
     "request": "^2.88.2",
     "request-promise-native": "^1.0.9",
+    "s3-sync-client": "^4.3.1",
     "semantic-release": "^24.2.3",
     "shelljs": "^0.9.2",
     "yargs": "^17.7.2"
@@ -35,13 +37,20 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.23.0",
+    "@types/mime-types": "^2.1.4",
+    "@types/request-promise-native": "^1.0.21",
+    "@types/shelljs": "^0.8.15",
+    "@types/yargs": "^17.0.33",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9.23.0",
     "eslint-config-prettier": "^10.1.1",
     "globals": "^16.0.0",
     "husky": "^9.1.7",
     "prettier": "3.5.3",
-    "prettier-eslint": "^16.3.0"
+    "prettier-eslint": "^16.3.0",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.28.0"
   },
   "repository": {
     "type": "git",
@@ -51,5 +60,10 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "aws-sdk"
+    ]
   }
 }

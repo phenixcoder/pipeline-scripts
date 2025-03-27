@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
-const chalk = require('chalk');
-const fs = require('fs');
-const { exit } = require('process');
-const shell = require('shelljs');
-const PackageJSON = require('../../lib/package-json');
+import chalk from 'chalk';
+import fs from 'fs';
+import { exit } from 'process';
+import shell from 'shelljs';
+import PackageJSON from '../../lib/package-json';
+import { PackageArgs as Args } from '../../types';
 
-function SERVICE(args) {
+function SERVICE(args: Args): void {
   const BUILD_ENV = args.env || 'production';
   const currentProject = PackageJSON();
 
@@ -17,16 +18,16 @@ function SERVICE(args) {
   console.log(chalk.green('🧹 Cleaning up'));
   ['build'].forEach((dir) => {
     if (fs.existsSync(dir)) {
-      console.log(chalk.gray(`Removing ${dir}`));
+      console.log(chalk.blackBright(`Removing ${dir}`));
       shell.rm('-rf', dir);
     }
   });
 
-  console.log(chalk.green('🏗  Genenrating Build'));
-  let x = shell.exec('npm run package');
+  console.log(chalk.green('🏗  Generating Build'));
+  const x = shell.exec('npm run package');
 
   if (x.code === 0) {
-    console.log(chalk.gray('Build Created. Ready to publish to NPM.'));
+    console.log(chalk.blackBright('Build Created. Ready to publish to NPM.'));
   } else {
     console.log(chalk.red('Build Failure'));
     exit(x.code);
@@ -35,4 +36,4 @@ function SERVICE(args) {
   return;
 }
 
-module.exports = SERVICE;
+export default SERVICE;

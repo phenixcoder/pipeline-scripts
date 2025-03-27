@@ -1,9 +1,25 @@
-const fs = require('fs');
-const path = require('path');
-const shell = require('shelljs');
-const PackageJson = require('./package-json');
+import fs from 'fs';
+import path from 'path';
+import shell from 'shelljs';
+import PackageJson from './package-json';
 
-function NormalisePropertyName(s) {
+interface Service {
+  name: string;
+  endpoint: string;
+}
+
+interface Website {
+  name: string;
+  domain: string;
+}
+
+interface Infrastructure {
+  environment: string;
+  services: Service[];
+  websites: Website[];
+}
+
+function NormalisePropertyName(s: string): string {
   return s
     .split(/\s|-/)
     .map((w) => w[0].toUpperCase().charAt(0) + w.substring(1))
@@ -12,15 +28,18 @@ function NormalisePropertyName(s) {
 
 /**
  * Generates a version.json file at suggested path. Uses terraform output of infrastructure to generate urls
- * @param {Object} infrastructure Infrastructure object with environment, services and websites.
+ * @param {Infrastructure} infrastructure Infrastructure object with environment, services and websites.
  * @param {string} filepath Full path including filename where version.json will be written.
  * @returns {Object} Version.json as parsed JSON object.
  */
-function GenerateVersion(infrastructure, filepath) {
-  if (typeof infrastructure != 'object') {
-    throw 'Infrastrucure not passed as Object';
+function GenerateVersion(
+  infrastructure: Infrastructure,
+  filepath?: string,
+): object {
+  if (typeof infrastructure !== 'object') {
+    throw new Error('Infrastructure not passed as Object');
   }
-  const urls = {};
+  const urls: { [key: string]: string } = {};
 
   infrastructure.services.forEach((svc) => {
     urls[NormalisePropertyName(`${svc.name} service`)] = svc.endpoint;
@@ -58,4 +77,4 @@ function GenerateVersion(infrastructure, filepath) {
   return config;
 }
 
-module.exports = GenerateVersion;
+export default GenerateVersion;

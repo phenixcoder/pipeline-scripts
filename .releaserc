@@ -5,6 +5,17 @@
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
-    "@semantic-release/npm"
+    ["@semantic-release/npm", {
+      "pkgRoot": "build"
+    }],
+    {
+      "verifyConditions": ["@semantic-release/npm"],
+      "prepare": [
+        {
+          "path": "@semantic-release/exec",
+          "cmd": "npm run build && node scripts/strip-dev-config.js ${nextRelease.version} && cp prod.package.json build/package.json && npm shrinkwrap && cp npm-shrinkwrap.json build/"
+        }
+      ]
+    }
   ]
 }

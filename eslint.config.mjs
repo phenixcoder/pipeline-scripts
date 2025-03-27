@@ -1,37 +1,46 @@
-import { defineConfig } from 'eslint/config';
-import globals from 'globals';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import js from '@eslint/js';
-import { FlatCompat } from '@eslint/eslintrc';
+// @ts-check
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
+import eslint from '@eslint/js';
+import tseslint from 'typescript-eslint';
+// import { defineConfig } from 'eslint/config';
+// import globals from 'globals';
+// import path from 'node:path';
+// import { fileURLToPath } from 'node:url';
+// import js from '@eslint/js';
+// import { FlatCompat } from '@eslint/eslintrc';
 
-export default defineConfig([
-  {
-    extends: compat.extends('eslint:recommended', 'prettier'),
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// const compat = new FlatCompat({
+//   baseDirectory: __dirname,
+//   recommendedConfig: js.configs.recommended,
+//   allConfig: js.configs.all,
+// });
 
-    languageOptions: {
-      globals: {
-        ...globals.node,
-        ...globals.commonjs,
-      },
+export default tseslint.config(
+  eslint.configs.recommended,
+  tseslint.configs.recommended,
+);
 
-      ecmaVersion: 12,
-      sourceType: 'commonjs',
-    },
+// export default defineConfig([
+//   {
+//     extends: compat.extends('eslint:recommended', 'prettier'),
 
-    rules: {
-      indent: ['error', 2],
-      'linebreak-style': ['error', 'unix'],
-      quotes: ['error', 'single'],
-      semi: ['error', 'always'],
-    },
-  },
-]);
+//     languageOptions: {
+//       globals: {
+//         ...globals.node,
+//         ...globals.commonjs,
+//       },
+
+//       ecmaVersion: 12,
+//       sourceType: 'commonjs',
+//     },
+
+//     rules: {
+//       indent: ['error', 2],
+//       'linebreak-style': ['error', 'unix'],
+//       quotes: ['error', 'single'],
+//       semi: ['error', 'always'],
+//     },
+//   },
+// ]);

@@ -1,17 +1,21 @@
 #!/usr/bin/env node
 
-const chalk = require('chalk');
-const shell = require('shelljs');
-const { exit } = process;
-const GenerateVersion = require('../lib/generate-version');
-const DeployRC = require('../lib/deployrc');
-const Log = require('../lib/logger');
+import { GenerateArgs } from '../../types';
 
-async function GENERATE_VERSION(args) {
+import chalk from 'chalk';
+import shell from 'shelljs';
+import { exit } from 'process';
+import Log from '../../lib/logger';
+import DeployRC from '../../lib/deployrc';
+import GenerateVersion from '../../lib/generate-version';
+
+async function Version(args: GenerateArgs): Promise<void> {
   try {
     // Usage Example : pipeline generate-version --environment production
-    args.debug && Log(args);
-    const { environment } = args;
+    if (args.debug) {
+      Log(args);
+    }
+    const environment = args.e || 'production';
     const deployrc = DeployRC();
 
     if (!deployrc.environments[environment]) {
@@ -28,15 +32,15 @@ async function GENERATE_VERSION(args) {
     Log(chalk.yellowBright('\nFetch site information'));
     Log(
       chalk.gray(`
-  Terraform workspace Id: ${deployrc.environments[args.environment]}
-  Environment: ${args.environment}
+  Terraform workspace Id: ${deployrc.environments[environment]}
+  Environment: ${environment}
 
   Executing:
-    tfc output get --workspace ${deployrc.environments[args.environment]}
+    tfc output get --workspace ${deployrc.environments[environment]}
   `),
     );
-    let { stdout, stderr, code } = shell.exec(
-      `tfc output get --workspace ${deployrc.environments[args.environment]}`,
+    const { stdout, stderr, code } = shell.exec(
+      `tfc output get --workspace ${deployrc.environments[environment]}`,
       { silent: true },
     );
     let Output;
@@ -57,11 +61,11 @@ async function GENERATE_VERSION(args) {
     console.log(JSON.stringify(GenerateVersion(Output), null, '  '));
   } catch (error) {
     console.log(chalk.redBright(`Error: ${error}`));
-    if (error.stack && args.dryRun) {
+    if (error instanceof Error && 'stack' in error && args.dryRun) {
       console.log(chalk.gray(error.stack));
     }
     exit(1);
   }
 }
 
-module.exports = GENERATE_VERSION;
+export default Version;
